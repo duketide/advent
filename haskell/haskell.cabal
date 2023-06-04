@@ -30,6 +30,7 @@ library
                     , Y2019.Day4
                     , Y2019.Day5
                     , Y2019.Day6
+                    , Y2019.Day7
 
     -- Modules included in this library but not exported.
     -- other-modules: 

@@ -2,13 +2,24 @@ module IntCom
   ( execute,
     findRes,
     loadProg,
+    Return (R),
+    status,
+    state,
+    outputs,
+    HaltOrAwait (Halt, Await),
   )
 where
 
 import Data.Map (Map)
 import qualified Data.Map as M
 
-data Param = P | I
+data HaltOrAwait = Halt | Await deriving (Eq, Ord, Show)
+
+data Return = R
+  { status :: HaltOrAwait,
+    state :: (Int, Map Int Int), -- the Int is the instruction pointer
+    outputs :: [Int]
+  }
 
 padLength = 5
 
@@ -17,15 +28,15 @@ pad s
   | length s == padLength = s
   | otherwise = pad ('0' : s)
 
-execute :: [Int] -> Map Int Int -> (Int, [Int])
-execute inp = go inp [] 0
+execute :: Int -> [Int] -> Map Int Int -> Return
+execute start inp = go inp [] start
   where
-    go :: [Int] -> [Int] -> Int -> Map Int Int -> (Int, [Int])
+    go :: [Int] -> [Int] -> Int -> Map Int Int -> Return
     go i o pos m
-      | opCode == 99 = (m M.! 0, o)
+      | opCode == 99 = R {status = Halt, state = (pos, m), outputs = o}
       | opCode == 1 = go i o (pos + 4) $ M.insert three sm m
       | opCode == 2 = go i o (pos + 4) $ M.insert three pd m
-      | opCode == 3 = go (tail i) o (pos + 2) $ M.insert one (head i) m
+      | opCode == 3 = if null i then R {status = Await, state = (pos, m), outputs = o} else go (tail i) o (pos + 2) $ M.insert one (head i) m
       | opCode == 4 = go i (m M.! one : o) (pos + 2) m
       | opCode == 5 = go i o (if isTrue then m M.! two else pos + 3) m
       | opCode == 6 = go i o (if isFalse then m M.! two else pos + 3) m
@@ -59,7 +70,8 @@ findRes res = go 99 99
       | verb == -1 = go (noun - 1) 99 mp
       | otherwise = go noun (verb - 1) mp
       where
-        answer = fst $ execute [] $ M.insert 2 verb (M.insert 1 noun mp)
+        ansMap = snd . state $ execute 0 [] $ M.insert 2 verb (M.insert 1 noun mp)
+        answer = ansMap M.! 0
 
 loadProg :: [Int] -> Map Int Int
 loadProg = fst . foldl (\(m, n) x -> (M.insert n x m, n + 1)) (M.empty, 0)
