@@ -32,17 +32,17 @@ execute :: Int -> [Int] -> Map Int Int -> Return
 execute start inp = go inp [] start
   where
     go :: [Int] -> [Int] -> Int -> Map Int Int -> Return
-    go i o pos m
-      | opCode == 99 = R {status = Halt, state = (pos, m), outputs = o}
-      | opCode == 1 = go i o (pos + 4) $ M.insert three sm m
-      | opCode == 2 = go i o (pos + 4) $ M.insert three pd m
-      | opCode == 3 = if null i then R {status = Await, state = (pos, m), outputs = o} else go (tail i) o (pos + 2) $ M.insert one (head i) m
-      | opCode == 4 = go i (m M.! one : o) (pos + 2) m
-      | opCode == 5 = go i o (if isTrue then m M.! two else pos + 3) m
-      | opCode == 6 = go i o (if isFalse then m M.! two else pos + 3) m
-      | opCode == 7 = go i o (pos + 4) lessThan
-      | opCode == 8 = go i o (pos + 4) equals
-      | otherwise = error ("bad opCode of " ++ show opCode ++ " at pos " ++ show pos ++ " which is " ++ show (m M.! pos))
+    go i o pos m = case opCode of
+      99 -> R {status = Halt, state = (pos, m), outputs = o}
+      1 -> go i o (pos + 4) $ M.insert three sm m
+      2 -> go i o (pos + 4) $ M.insert three pd m
+      3 -> if null i then R {status = Await, state = (pos, m), outputs = o} else go (tail i) o (pos + 2) $ M.insert one (head i) m
+      4 -> go i (m M.! one : o) (pos + 2) m
+      5 -> go i o (if isTrue then m M.! two else pos + 3) m
+      6 -> go i o (if isFalse then m M.! two else pos + 3) m
+      7 -> go i o (pos + 4) lessThan
+      8 -> go i o (pos + 4) equals
+      _ -> error ("bad opCode of " ++ show opCode ++ " at pos " ++ show pos ++ " which is " ++ show (m M.! pos))
       where
         inst = pad $ show $ m M.! pos
         opCode = read $ drop (padLength - 2) inst
