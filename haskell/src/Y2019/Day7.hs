@@ -46,16 +46,17 @@ looper = go A [0]
         winner = if curr == E then res else ampSt M.! E
         finished = all (\x -> status x == Halt) $ M.elems ampSt
 
-combos :: Int -> Int -> [[Int]]
-combos a b = [[u, w, x, y, z] | let l = [min a b .. max a b], u <- l, w <- l, x <- l, y <- l, z <- l, let t = [u, w, x, y, z], length t == length (nub t)]
+combos :: [Int] -> [[Int]]
+combos [] = [[]]
+combos xs = [x : y | x <- xs, y <- combos $ filter (/= x) xs]
 
 solve :: IO (Int, Int)
 solve = do
   rawInput <- getInput "2019" "7"
   let input = loadProg $ map readInt $ splitOn "," rawInput
-      p1c = combos 0 4
+      p1c = combos [0 .. 4]
       p1 = maximum $ map (singleRun input) p1c
-      p2c = combos 5 9
+      p2c = combos [5 .. 9]
       r = R {status = Await, state = (0, input), outputs = []}
       p2state = foldr (`M.insert` r) M.empty [A, B, C, D, E]
       p2 = maximum $ map (looper p2state) p2c
