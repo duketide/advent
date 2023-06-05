@@ -1,15 +1,13 @@
 module Y2019.Day7 (solve) where
 
 import AOC (getInput, readInt)
-import Data.List (nub)
+import Data.List (nub, permutations)
 import Data.List.Split (splitOn)
 import Data.Map (Map)
 import qualified Data.Map as M
-import IntCom (HaltOrAwait (Await, Halt), Return (R, outputs, state, status), execute, loadProg)
+import IntCom (HaltOrAwait (Await, Halt), Program, Return (R, outputs, state, status), execute, loadProg, program)
 
 type AmpState = Map Amp Return
-
-type Program = Map Int Int
 
 data Amp = A | B | C | D | E deriving (Eq, Ord)
 
@@ -21,14 +19,14 @@ next c = case c of
   D -> E
   E -> A
 
-singleRun :: Map Int Int -> [Int] -> Int
+singleRun :: Program -> [Int] -> Int
 singleRun prog = go 0
   where
     go o [] = o
-    go o p = go nextO nextP
+    go o (p : ps) = go nextO nextP
       where
-        nextP = tail p
-        nextO = head . outputs $ execute 0 [head p, o] prog
+        nextP = ps
+        nextO = head . outputs $ execute 0 [p, o] prog
 
 looper :: AmpState -> [Int] -> Int
 looper = go A [0]
@@ -46,18 +44,18 @@ looper = go A [0]
         winner = if curr == E then res else ampSt M.! E
         finished = all (\x -> status x == Halt) $ M.elems ampSt
 
-combos :: [Int] -> [[Int]]
-combos [] = [[]]
-combos xs = [x : y | x <- xs, y <- combos $ filter (/= x) xs]
+p1 :: Program -> Int
+p1 p = maximum $ singleRun p <$> permutations [0 .. 4]
+
+p2 :: Program -> Int
+p2 p = maximum $ looper (initState p) <$> permutations [5 .. 9]
+
+initState :: Program -> AmpState
+initState p = foldr (`M.insert` r) M.empty [A, B, C, D, E]
+  where
+    r = R {status = Await, state = (0, p), outputs = []}
 
 solve :: IO (Int, Int)
 solve = do
-  rawInput <- getInput "2019" "7"
-  let input = loadProg $ map readInt $ splitOn "," rawInput
-      p1c = combos [0 .. 4]
-      p1 = maximum $ map (singleRun input) p1c
-      p2c = combos [5 .. 9]
-      r = R {status = Await, state = (0, input), outputs = []}
-      p2state = foldr (`M.insert` r) M.empty [A, B, C, D, E]
-      p2 = maximum $ map (looper p2state) p2c
-  return (p1, p2)
+  input <- program <$> getInput "2019" "7"
+  return (p1 input, p2 input)
