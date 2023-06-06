@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AOC (readInt, getInput, trim, rawLines) where
+module AOC (readInt, getInput, trim, nbrs, nbrsBounded) where
 
 import Control.Lens ((&), (.~), (^.))
 import Data.ByteString (ByteString)
@@ -9,6 +9,8 @@ import Data.List.Split (splitOn)
 import Network.Wreq (defaults, getWith, header, responseBody)
 import System.Directory (doesFileExist, getHomeDirectory)
 import System.Posix.Env.ByteString (getEnv)
+
+type Pair = (Int, Int)
 
 readInt :: String -> Int
 readInt = read
@@ -27,9 +29,6 @@ parseString s = go s []
       where
         (next, p) = head $ readLitChar o
 
-rawLines :: String -> [String]
-rawLines = splitOn "\\n"
-
 getInput :: String -> String -> IO String
 getInput year day = do
   home <- getHomeDirectory
@@ -38,7 +37,7 @@ getInput year day = do
   if haveInput
     then readFile file
     else do
-      -- need to store "AOC_SESSION" as "session={token}"
+      -- need to store "AOC_SESSION" as "session=TOKEN"
       token <- getEnv "AOC_SESSION"
       case token of
         Nothing -> return "busted env variable"
@@ -52,3 +51,13 @@ fetch token year day file = do
   let str = parseString $ tail . init . show $ response ^. responseBody
   writeFile file str
   readFile file
+
+nbrs :: Pair -> [Pair]
+nbrs (a, b) = [(f a, g b) | f <- funcs, g <- funcs, (f a, g b) /= (a, b)]
+  where
+    funcs = [(+ 1), (+ (-1)), id]
+
+nbrsBounded :: Pair -> Pair -> Pair -> [Pair]
+nbrsBounded (xMin, xMax) (yMin, yMax) (a, b) = [(f a, g b) | f <- funcs, g <- funcs, let x = f a; y = g b, (x, y) /= (a, b), x >= xMin, x <= xMax, y >= yMin, y <= yMax]
+  where
+    funcs = [(+ 1), (+ (-1)), id]

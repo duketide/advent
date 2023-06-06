@@ -1,6 +1,6 @@
 module Y2019.Day1 (solve) where
 
-import AOC (getInput, rawLines, readInt)
+import AOC (getInput, readInt)
 
 reducer :: Int -> Int
 reducer n = go n 0

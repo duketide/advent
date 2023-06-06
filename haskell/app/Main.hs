@@ -7,6 +7,7 @@ import Y2019.Day4
 import Y2019.Day5
 import Y2019.Day6
 import Y2019.Day7
+import Y2019.Day8
 
 report :: Show a => Show b => Int -> IO (a, b) -> IO ()
 report d x = do
@@ -22,3 +23,4 @@ main = do
   report 5 Y2019.Day5.solve
   report 6 Y2019.Day6.solve
   report 7 Y2019.Day7.solve
+  report 8 Y2019.Day8.solve
