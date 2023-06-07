@@ -1,6 +1,7 @@
 module Main where
 
 import Y2019.Day1
+import Y2019.Day10
 import Y2019.Day2
 import Y2019.Day3
 import Y2019.Day4
@@ -26,3 +27,4 @@ main = do
   report 7 Y2019.Day7.solve
   report 8 Y2019.Day8.solve
   report 9 Y2019.Day9.solve
+  report 10 Y2019.Day10.solve
