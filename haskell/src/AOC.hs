@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AOC (readInt, getInput, trim, nbrs, nbrsBounded) where
+module AOC (readInt, getInput, trim, nbrs, nbrsBounded, predWrap, succWrap) where
 
 import Control.Lens ((&), (.~), (^.))
+import Data.Bits (Bits (xor))
 import Data.ByteString (ByteString)
 import Data.Char (isSpace, readLitChar)
 import Data.List.Split (splitOn)
@@ -61,3 +62,13 @@ nbrsBounded :: Pair -> Pair -> Pair -> [Pair]
 nbrsBounded (xMin, xMax) (yMin, yMax) (a, b) = [(f a, g b) | f <- funcs, g <- funcs, let x = f a; y = g b, (x, y) /= (a, b), x >= xMin, x <= xMax, y >= yMin, y <= yMax]
   where
     funcs = [(+ 1), (+ (-1)), id]
+
+succWrap :: (Bounded a, Enum a, Eq a) => a -> a
+succWrap x
+  | x == maxBound = minBound
+  | otherwise = succ x
+
+predWrap :: (Bounded a, Enum a, Eq a) => a -> a
+predWrap x
+  | x == minBound = maxBound
+  | otherwise = pred x
