@@ -26,6 +26,7 @@ data Return = R
     state :: (Int, Program), -- the Int is the instruction pointer
     outputs :: [Int]
   }
+  deriving (Show)
 
 padLength = 5
 
