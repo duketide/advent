@@ -7,6 +7,7 @@ module IntCom
     status,
     state,
     outputs,
+    rb,
     HaltOrAwait (Halt, Await),
     Program,
   )
@@ -24,6 +25,7 @@ data HaltOrAwait = Halt | Await deriving (Eq, Ord, Show)
 data Return = R
   { status :: HaltOrAwait,
     state :: (Int, Program), -- the Int is the instruction pointer
+    rb :: Int, -- relative base
     outputs :: [Int]
   }
   deriving (Show)
@@ -38,15 +40,15 @@ pad s
 (#&) :: IntMap Int -> Int -> Int
 (#&) m k = fromMaybe 0 $ IM.lookup k m
 
-execute :: Int -> [Int] -> Program -> Return
-execute start inp = go inp [] start 0
+execute :: Int -> [Int] -> Int -> Program -> Return
+execute start inp = go inp [] start
   where
     go :: [Int] -> [Int] -> Int -> Int -> Program -> Return
     go i o pos r m = case opCode of
-      99 -> R {status = Halt, state = (pos, m), outputs = o}
+      99 -> R {status = Halt, state = (pos, m), rb = r, outputs = o}
       1 -> go i o (pos + 4) r $ IM.insert three sm m
       2 -> go i o (pos + 4) r $ IM.insert three pd m
-      3 -> if null i then R {status = Await, state = (pos, m), outputs = o} else go (tail i) o (pos + 2) r $ IM.insert one (head i) m
+      3 -> if null i then R {status = Await, state = (pos, m), rb = r, outputs = o} else go (tail i) o (pos + 2) r $ IM.insert one (head i) m
       4 -> go i (m #& one : o) (pos + 2) r m
       5 -> go i o (if isTrue then m #& two else pos + 3) r m
       6 -> go i o (if isFalse then m #& two else pos + 3) r m
@@ -82,7 +84,7 @@ findRes res = go 99 99
       | verb == -1 = go (noun - 1) 99 mp
       | otherwise = go noun (verb - 1) mp
       where
-        ansMap = snd . state $ execute 0 [] $ IM.insert 2 verb (IM.insert 1 noun mp)
+        ansMap = snd . state $ execute 0 [] 0 $ IM.insert 2 verb (IM.insert 1 noun mp)
         answer = ansMap IM.! 0
 
 program :: String -> Program

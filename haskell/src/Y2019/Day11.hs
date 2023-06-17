@@ -5,7 +5,7 @@ import Data.List.Split (chunksOf)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
-import IntCom (HaltOrAwait (Halt), Program, Return (R, outputs, state, status), execute, program)
+import IntCom (HaltOrAwait (Halt), Program, Return (R, outputs, rb, state, status), execute, program)
 
 type Point = (Int, Int)
 
@@ -32,14 +32,14 @@ data Robot = Robot
   }
 
 looper :: Program -> Map Point Int -> Map Point Int
-looper p = go p 0 (Robot {facing = N, pos = (1, 1)})
+looper p = go p 0 0 (Robot {facing = N, pos = (0, 0)})
   where
-    go :: Program -> Int -> Robot -> Map Point Int -> Map Point Int
-    go p ip Robot {facing = facing, pos = pos} mp
-      | status == Halt = mp
-      | otherwise = go nextP nextIp nextR nextMap
+    go :: Program -> Int -> Int -> Robot -> Map Point Int -> Map Point Int
+    go p relBase ip Robot {facing = facing, pos = pos} mp
+      | sts == Halt = mp
+      | otherwise = go nextP rb nextIp nextR nextMap
       where
-        R {outputs = (dir : color : _), state = (nextIp, nextP), status = status} = execute ip (pure inp) p
+        R {outputs = (dir : color : _), state = (nextIp, nextP), rb = rb, status = sts} = execute ip (pure inp) relBase p
         inp = fromMaybe 0 $ M.lookup pos mp
         nextMap = M.insert pos color mp
         nextFacing = let f = if dir == 0 then left else right in f facing
@@ -74,7 +74,7 @@ p1Solve :: Program -> Int
 p1Solve = length . flip looper M.empty
 
 p2Solve :: Program -> String
-p2Solve = draw . flip looper (M.singleton (1, 1) 1)
+p2Solve = draw . flip looper (M.singleton (0, 0) 1)
 
 solve :: IO (Int, String)
 solve = do

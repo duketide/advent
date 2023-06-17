@@ -5,7 +5,7 @@ import Data.List (nub, permutations)
 import Data.List.Split (splitOn)
 import Data.Map (Map)
 import qualified Data.Map as M
-import IntCom (HaltOrAwait (Await, Halt), Program, Return (R, outputs, state, status), execute, loadProg, program)
+import IntCom (HaltOrAwait (Await, Halt), Program, Return (R, outputs, rb, state, status), execute, loadProg, program)
 
 type AmpState = Map Amp Return
 
@@ -26,7 +26,7 @@ singleRun prog = go 0
     go o (p : ps) = go nextO nextP
       where
         nextP = ps
-        nextO = head . outputs $ execute 0 [p, o] prog
+        nextO = head . outputs $ execute 0 [p, o] 0 prog
 
 looper :: AmpState -> [Int] -> Int
 looper = go A [0]
@@ -36,7 +36,7 @@ looper = go A [0]
       | finished = last $ outputs winner
       | otherwise = go (next curr) (reverse $ outputs res) nextState nextPhases
       where
-        res = execute ip inputs prog
+        res = execute ip inputs 0 prog
         inputs = [head p | not (null p)] ++ inp
         (ip, prog) = state $ ampSt M.! curr
         nextPhases = if null p then [] else tail p
@@ -53,7 +53,7 @@ p2 p = maximum $ looper (initState p) <$> permutations [5 .. 9]
 initState :: Program -> AmpState
 initState p = foldr (`M.insert` r) M.empty [A, B, C, D, E]
   where
-    r = R {status = Await, state = (0, p), outputs = []}
+    r = R {status = Await, state = (0, p), rb = 0, outputs = []}
 
 solve :: IO (Int, Int)
 solve = do
