@@ -15,8 +15,6 @@ type Point = (Int, Int)
 
 type Screen = Map Int (Set Point)
 
-data BallDir = Lft | Rt
-
 p1 :: Program -> Int
 p1 p = length . filter (\(z : _ : _ : _) -> z == 2) . chunksOf 3 . outputs $ execute 0 [] 0 p
 
@@ -31,12 +29,12 @@ drawScreen o = foldr mapper M.empty (chunksOf 3 o)
         newSet = S.insert (x, y) $ fromMaybe S.empty $ M.lookup z acc
 
 gameLoop :: Program -> Int
-gameLoop = go 0 0 [] 0 (0, 0)
+gameLoop = go 0 0 [] (0, 0)
   where
-    go :: Int -> Int -> [Int] -> Int -> Point -> Program -> Int
-    go ip relBase input n (bx, by) p
+    go :: Int -> Int -> [Int] -> Point -> Program -> Int
+    go ip relBase input (bx, by) p
       | isNothing (M.lookup 4 nextScreen) = score
-      | otherwise = go nextIp rb (pure nextInput) (n + 1) (bar + nextInput, barY) nextP
+      | otherwise = go nextIp rb (pure nextInput) (bar + nextInput, barY) nextP
       where
         R {status = status, state = (nextIp, nextP), rb = rb, outputs = outputs'} = execute ip input relBase p
         screen = drawScreen outputs'
