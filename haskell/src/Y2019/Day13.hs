@@ -13,8 +13,6 @@ import IntCom (HaltOrAwait (Halt), Program, Return (R, outputs, rb, state, statu
 
 type Point = (Int, Int)
 
-type Screen = Map Int (Set Point)
-
 p1 :: Program -> Int
 p1 p = length . filter (\(z : _ : _ : _) -> z == 2) . chunksOf 3 . outputs $ execute 0 [] 0 p
 
