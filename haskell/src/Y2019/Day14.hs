@@ -13,10 +13,12 @@ data Material = Material {compound :: String, quantity :: Int} deriving (Show)
 
 data Node = Node {num :: Int, ingredients :: [Material]} deriving (Show)
 
+maxOre = 10 ^ 12
+
 solve :: IO (Int, Int)
 solve = do
   input <- parse . fmap (fmap (splitOn ",") . splitOn "=>") . lines <$> getInput "2019" "14"
-  return (dfs 1 input "FUEL", p2 2391000 input "FUEL")
+  return (dfs 1 input "FUEL", search (bounds 1 input) input)
 
 parse :: [[[String]]] -> Tree
 parse = foldr f M.empty
@@ -30,12 +32,6 @@ parse = foldr f M.empty
               where
                 (q : c : _) = words . trim $ x
                 m = Material {compound = c, quantity = read q}
-
--- could speed up p2 with binary search
-p2 :: Int -> Tree -> String -> Int
-p2 n t s
-  | dfs n t s <= 1000000000000 = n
-  | otherwise = p2 (n - 1) t s
 
 dfs :: Int -> Tree -> String -> Int
 dfs n t s = go [(s, n)] M.empty 0
@@ -55,3 +51,21 @@ dfs n t s = go [(s, n)] M.empty 0
         ys = fmap (\Material {compound = c, quantity = q} -> (c, m * q)) ing
         nLst = ys ++ xs
         Node {num = num, ingredients = ing} = t M.! x
+
+bounds :: Int -> Tree -> (Int, Int)
+bounds n t
+  | result > maxOre = (n, n `div` 2)
+  | otherwise = bounds (n * 2) t
+  where
+    result = dfs n t "FUEL"
+
+search :: (Int, Int) -> Tree -> Int
+search (upper, lower) tree
+  | mid > maxOre && subMid <= maxOre = n - 1
+  | otherwise = search (upper', lower') tree
+  where
+    n = (upper + lower) `div` 2
+    mid = dfs n tree "FUEL"
+    subMid = dfs (n - 1) tree "FUEL"
+    upper' = if mid > maxOre then n else upper
+    lower' = if mid < maxOre then n else lower
