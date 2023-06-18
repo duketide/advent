@@ -1,7 +1,6 @@
 module Y2019.Day14 (solve) where
 
 import AOC (getInput, trim)
-import Control.Monad (MonadPlus (mplus))
 import Data.List.Split (splitOn)
 import Data.Map (Map)
 import qualified Data.Map as M
