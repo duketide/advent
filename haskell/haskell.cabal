@@ -41,6 +41,7 @@ library
                     , Y2019.Day15
                     , Y2019.Day16
                     , Y2019.Day17
+                    , Y2019.Day18
 
     -- Modules included in this library but not exported.
     -- other-modules: 
