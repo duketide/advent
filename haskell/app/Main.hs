@@ -7,6 +7,7 @@ import Y2019.Day12
 import Y2019.Day13
 import Y2019.Day14
 import Y2019.Day15
+import Y2019.Day16
 import Y2019.Day2
 import Y2019.Day3
 import Y2019.Day4
@@ -38,3 +39,4 @@ main = do
   report 13 Y2019.Day13.solve
   report 14 Y2019.Day14.solve
   report 15 Y2019.Day15.solve
+  report 16 Y2019.Day16.solve
