@@ -1,8 +1,7 @@
 module Y2019.Day18 (solve) where
 
 import AOC (getInput)
-import Data.Char (toUpper)
-import qualified Data.Foldable as F
+import Data.Char (isLower, toUpper)
 import Data.Heap (MinPrioHeap)
 import qualified Data.Heap as H
 import Data.List (nub)
@@ -13,10 +12,6 @@ import Data.Set (Set)
 import qualified Data.Set as S
 
 type Point = (Int, Int)
-
-data Remove = Remove deriving (Eq, Show)
-
-type TileCheck = Either Remove (Set Char)
 
 data State = State
   { doors :: Set Char,
@@ -52,7 +47,6 @@ p1 mp st = go (H.singleton (0, st)) 0 M.empty
     go :: MinPrioHeap Int State -> Int -> StateMemo -> Int
     go hp n sm
       | d >= 52 = pr
-      | n `mod` 10000 == 0 = go (H.fromList $ H.take 10000 hp1) (n + 1) sm'
       | otherwise = go hp1 (n + 1) sm'
       where
         ((pr, pt), hp0) = fromMaybe (error "empty heap") $ H.view hp
@@ -71,8 +65,10 @@ bfsGrowth mp c@(State d (x, y) t) = go [c] S.empty S.empty 0
     go locs seen sts tn = go nLocs nSeen nSts (tn + 1)
       where
         nSeen = S.union seen (S.fromList . fmap curr $ locs)
-        nLocs' = locs >>= growState mp seen
+        nLocs' = locs' >>= growState mp seen
         nLocs = nub nLocs'
+        -- this locs' trick (don't go through a key to get to another key) cut run time from ~7 minutes to < 10 seconds
+        locs' = filter (\x -> let t = fromMaybe '?' (M.lookup (curr x) mp) in not (t `notElem` doors x && isLower t)) locs
         nSts = S.union sts $ foldr g S.empty locs
         g (State d cr t) acc = if tile cr `elem` ['a' .. 'z'] && not (S.member (tile cr) d) then S.insert (State (S.insert (toUpper (tile cr)) $ S.insert (tile cr) d) cr t) acc else acc
           where
