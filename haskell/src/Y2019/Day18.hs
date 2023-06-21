@@ -2,10 +2,13 @@ module Y2019.Day18 (solve) where
 
 import AOC (getInput)
 import Data.Char (toUpper)
+import qualified Data.Foldable as F
+import Data.Heap (MinPrioHeap)
+import qualified Data.Heap as H
 import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing)
 import Data.Set (Set)
 import qualified Data.Set as S
 
@@ -16,26 +19,21 @@ data Remove = Remove deriving (Eq, Show)
 type TileCheck = Either Remove (Set Char)
 
 data State = State
-  { doors :: TileCheck,
-    curr :: Point
+  { doors :: Set Char,
+    curr :: Point,
+    turn :: Int
   }
-  deriving (Eq)
+  deriving (Eq, Ord, Show)
+
+type StateMemo = Map Point (Map (Set Char) Int)
 
 solve :: IO (Int, Int)
 solve = do
   input <- getInput "2019" "18"
   let (mp, start) = mapFloor input
       numKeys = foldr (\x acc -> if x `elem` ['a' .. 'z'] then acc + 1 else acc) 0 $ fmap snd . M.assocs $ mp
-      startState = State {doors = Right S.empty, curr = start}
-  print $ length $ filter (\x -> x /= '#' && x /= '\n') input
-  return (p1 startState numKeys mp, 0)
-
-p1 :: State -> Int -> Map Point Char -> Int
-p1 s numKeys mp = go 0 [s]
-  where
-    go n st
-      | any (\(State d _) -> ((== numKeys) . length <$> d) == Right True) st = n
-      | otherwise = go (n + 1) (nub $ st >>= nextStates mp)
+      startState = State {doors = S.empty, curr = start, turn = 0}
+  return (p1 mp startState, 0)
 
 mapFloor :: String -> (Map Point Char, Point)
 mapFloor = fst . foldr f ((M.empty, (-1, -1)), (0, 0))
@@ -48,24 +46,52 @@ mapFloor = fst . foldr f ((M.empty, (-1, -1)), (0, 0))
         nextMp = M.insert (x, y) tile m
         nextP = (x + 1, y)
 
-nextStates :: Map Point Char -> State -> [State]
-nextStates mp (State doors c@(x, y)) = next
+p1 :: Map Point Char -> State -> Int
+p1 mp st = go (H.singleton (0, st)) 0 M.empty
   where
-    next = filter (\(State d t) -> d /= Left Remove) [up, down, left, right]
-    isKey = tile `elem` ['a' .. 'z'] && (not . S.member (toUpper tile) <$> doors) == Right True
-    tile = fromMaybe '?' (M.lookup (x, y) mp)
-    up = State (tileCheck c doors mp) (x, y - 1)
-    down = State (tileCheck c doors mp) (x, y + 1)
-    left = State (tileCheck c doors mp) (x - 1, y)
-    right = State (tileCheck c doors mp) (x + 1, y)
+    go :: MinPrioHeap Int State -> Int -> StateMemo -> Int
+    go hp n sm
+      | d >= 52 = pr
+      | n `mod` 10000 == 0 = go (H.fromList $ H.take 10000 hp1) (n + 1) sm'
+      | otherwise = go hp1 (n + 1) sm'
+      where
+        ((pr, pt), hp0) = fromMaybe (error "empty heap") $ H.view hp
+        d = length $ doors pt
+        nextS = S.filter (\(State d' c' t') -> t' < fromMaybe (10 ^ 9) (M.lookup c' sm >>= M.lookup d')) $ bfsGrowth mp pt
+        (hp1, sm') = foldr (\x (h, m) -> (H.insert (turn x, x) h, f x m)) (hp0, sm) nextS
+          where
+            f st smem = M.insert (curr st) next smem
+              where
+                next = M.insert (doors st) (turn st) $ fromMaybe M.empty $ M.lookup (curr st) smem
 
-tileCheck :: Point -> TileCheck -> Map Point Char -> TileCheck
-tileCheck pt s mp = case M.lookup pt mp of
-  Nothing -> Left Remove
-  Just '#' -> Left Remove
-  Just x -> f x
-    where
-      f a
-        | a `elem` ['a' .. 'z'] = S.insert (toUpper a) <$> s
-        | a `elem` ['A' .. 'Z'] = if (S.member a <$> s) == Right True then s else Left Remove
-        | otherwise = s
+bfsGrowth :: Map Point Char -> State -> Set State
+bfsGrowth mp c@(State d (x, y) t) = go [c] S.empty S.empty 0
+  where
+    go [] _ sts _ = sts
+    go locs seen sts tn = go nLocs nSeen nSts (tn + 1)
+      where
+        nSeen = S.union seen (S.fromList . fmap curr $ locs)
+        nLocs' = locs >>= growState mp seen
+        nLocs = nub nLocs'
+        nSts = S.union sts $ foldr g S.empty locs
+        g (State d cr t) acc = if tile cr `elem` ['a' .. 'z'] && not (S.member (tile cr) d) then S.insert (State (S.insert (toUpper (tile cr)) $ S.insert (tile cr) d) cr t) acc else acc
+          where
+            tile cr = fromMaybe '?' $ M.lookup cr mp
+
+growState :: Map Point Char -> Set Point -> State -> [State]
+growState mp seen (State d (x, y) t) = next
+  where
+    up = State d (x, y - 1) (t + 1)
+    down = State d (x, y + 1) (t + 1)
+    left = State d (x - 1, y) (t + 1)
+    right = State d (x + 1, y) (t + 1)
+    next = filter (tileCheck seen mp) [up, down, left, right]
+
+tileCheck :: Set Point -> Map Point Char -> State -> Bool
+tileCheck seen mp (State doors pt@(x, y) _)
+  | S.member pt seen = False
+  | tile == '#' = False
+  | tile `elem` ['A' .. 'Z'] && not (S.member tile doors) = False
+  | otherwise = True
+  where
+    tile = fromMaybe '#' $ M.lookup pt mp
