@@ -3,7 +3,6 @@
 module AOC (readInt, getInput, trim, nbrs, nbrsBounded, predWrap, succWrap) where
 
 import Control.Lens ((&), (.~), (^.))
-import Data.Bits (Bits (xor))
 import Data.ByteString (ByteString)
 import Data.Char (isSpace, readLitChar)
 import Data.List.Split (splitOn)

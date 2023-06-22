@@ -11,6 +11,7 @@ import Y2019.Day15
 import Y2019.Day16
 import Y2019.Day17
 import Y2019.Day18
+import Y2019.Day19
 import Y2019.Day2
 import Y2019.Day3
 import Y2019.Day4
@@ -43,16 +44,18 @@ solutions =
     report 15 Y2019.Day15.solve,
     report 16 Y2019.Day16.solve,
     report 17 Y2019.Day17.solve,
-    report 18 Y2019.Day18.solve
+    report 18 Y2019.Day18.solve,
+    report 19 Y2019.Day19.solve
   ]
 
 f :: String -> IO [()]
 f i
   | i `elem` (show <$> [1 .. length solutions]) = sequence [solutions !! (readInt i - 1)]
-  | otherwise = sequence solutions
+  | i == "all" = sequence solutions
+  | otherwise = sequence [last solutions]
 
 main :: IO [()]
 main = do
-  putStrLn "Which day?"
+  putStrLn "Which day? (default is latest, enter # or \"all\" for a specific day or all days, repsectively)"
   input <- getLine
   f input
