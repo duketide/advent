@@ -1,7 +1,7 @@
 module Y2019.Day18 (solve) where
 
 import AOC (getInput)
-import Data.Char (isLower, toUpper)
+import Data.Char (isLower, isUpper, toUpper)
 import Data.Heap (MinPrioHeap)
 import qualified Data.Heap as H
 import Data.List (nub)
@@ -25,10 +25,17 @@ type StateMemo = Map Point (Map (Set Char) Int)
 solve :: IO (Int, Int)
 solve = do
   input <- getInput "2019" "18"
-  let (mp, start) = mapFloor input
-      numKeys = foldr (\x acc -> if x `elem` ['a' .. 'z'] then acc + 1 else acc) 0 $ fmap snd . M.assocs $ mp
+  let (mp, start@(x0, y0)) = mapFloor input
+      numKeys = foldr (\x acc -> if isLower x then acc + 1 else acc) 0 $ fmap snd . M.assocs $ mp
       startState = State {doors = S.empty, curr = start, turn = 0}
-  return (p1 mp startState, 0)
+      input2 = mapP2 mp start
+      startStates2 =
+        [ startState {curr = (x0 - 1, y0 - 1)},
+          startState {curr = (x0 + 1, y0 - 1)},
+          startState {curr = (x0 + 1, y0 + 1)},
+          startState {curr = (x0 - 1, y0 + 1)}
+        ]
+  return (p1 mp startState numKeys, 0)
 
 mapFloor :: String -> (Map Point Char, Point)
 mapFloor = fst . foldr f ((M.empty, (-1, -1)), (0, 0))
@@ -41,12 +48,18 @@ mapFloor = fst . foldr f ((M.empty, (-1, -1)), (0, 0))
         nextMp = M.insert (x, y) tile m
         nextP = (x + 1, y)
 
-p1 :: Map Point Char -> State -> Int
-p1 mp st = go (H.singleton (0, st)) 0 M.empty
+mapP2 :: Map Point Char -> Point -> Map Point Char
+mapP2 mp (x, y) = next
+  where
+    lst = [(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y), (x, y)]
+    next = foldr (`M.insert` '#') mp lst
+
+p1 :: Map Point Char -> State -> Int -> Int
+p1 mp st nk = go (H.singleton (0, st)) 0 M.empty
   where
     go :: MinPrioHeap Int State -> Int -> StateMemo -> Int
     go hp n sm
-      | d >= 52 = pr
+      | d >= 2 * nk = pr
       | otherwise = go hp1 (n + 1) sm'
       where
         ((pr, pt), hp0) = fromMaybe (error "empty heap") $ H.view hp
@@ -70,7 +83,7 @@ bfsGrowth mp c@(State d (x, y) t) = go [c] S.empty S.empty 0
         -- this locs' trick (don't go through a key to get to another key) cut run time from ~7 minutes to < 10 seconds
         locs' = filter (\x -> let t = fromMaybe '?' (M.lookup (curr x) mp) in not (t `notElem` doors x && isLower t)) locs
         nSts = S.union sts $ foldr g S.empty locs
-        g (State d cr t) acc = if tile cr `elem` ['a' .. 'z'] && not (S.member (tile cr) d) then S.insert (State (S.insert (toUpper (tile cr)) $ S.insert (tile cr) d) cr t) acc else acc
+        g (State d cr t) acc = if isLower (tile cr) && not (S.member (tile cr) d) then S.insert (State (S.insert (toUpper (tile cr)) $ S.insert (tile cr) d) cr t) acc else acc
           where
             tile cr = fromMaybe '?' $ M.lookup cr mp
 
@@ -87,7 +100,7 @@ tileCheck :: Set Point -> Map Point Char -> State -> Bool
 tileCheck seen mp (State doors pt@(x, y) _)
   | S.member pt seen = False
   | tile == '#' = False
-  | tile `elem` ['A' .. 'Z'] && not (S.member tile doors) = False
+  | isUpper tile && not (S.member tile doors) = False
   | otherwise = True
   where
     tile = fromMaybe '#' $ M.lookup pt mp
