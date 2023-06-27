@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AOC (readInt, getInput, trim, nbrs, nbrsBounded, predWrap, succWrap) where
+module AOC (readInt, getInput, trim, nbrs, nbrsBounded, nbrs4, nbrsBounded4, predWrap, succWrap) where
 
 import Control.Lens ((&), (.~), (^.))
 import Data.ByteString (ByteString)
@@ -57,8 +57,18 @@ nbrs (a, b) = [(f a, g b) | f <- funcs, g <- funcs, (f a, g b) /= (a, b)]
   where
     funcs = [(+ 1), (+ (-1)), id]
 
+nbrs4 :: Pair -> [Pair]
+nbrs4 (a, b) = [(f a, g b) | f <- funcs, g <- funcs, (f a, g b) /= (a, b), f a == a || g b == b]
+  where
+    funcs = [(+ 1), (+ (-1)), id]
+
 nbrsBounded :: Pair -> Pair -> Pair -> [Pair]
 nbrsBounded (xMin, xMax) (yMin, yMax) (a, b) = [(f a, g b) | f <- funcs, g <- funcs, let x = f a; y = g b, (x, y) /= (a, b), x >= xMin, x <= xMax, y >= yMin, y <= yMax]
+  where
+    funcs = [(+ 1), (+ (-1)), id]
+
+nbrsBounded4 :: Pair -> Pair -> Pair -> [Pair]
+nbrsBounded4 (xMin, xMax) (yMin, yMax) (a, b) = [(f a, g b) | f <- funcs, g <- funcs, let x = f a; y = g b, (x, y) /= (a, b), x >= xMin, x <= xMax, y >= yMin, y <= yMax, f a == a || g b == b]
   where
     funcs = [(+ 1), (+ (-1)), id]
 
