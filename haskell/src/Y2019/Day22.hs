@@ -19,7 +19,11 @@ solve :: IO (Integer, Integer)
 solve = do
   input <- fmap words . lines <$> getInput "2019" "22"
   let (offsetDiff, incrementMult) = singleTurn p2Length input
+      -- increment for a number of iterations = incrementMult^iterations mod length
+      -- offset for a number of iterations = prevOffset + (prevIncrement * offsetDiff)
+      -- so final increment can be calculated with exponentiation, final offset with sum of geometric series
       finalInc = modExp incrementMult p2Cycles p2Length
+      -- final offset is sum of finite geometric series, see Wikipedia page ((a(1-r^n))/(1-r)), a == offsetDiff, r == incrementMult
       finalOffset = (`mod` p2Length) $ offsetDiff * (1 - modExp incrementMult p2Cycles p2Length) * modExp (1 - incrementMult) (p2Length - 2) p2Length
       p2 = (finalOffset + finalInc * 2020) `mod` p2Length
   return (p1 input, p2)
