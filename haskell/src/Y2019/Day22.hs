@@ -1,10 +1,13 @@
 module Y2019.Day22 (solve) where
 
 import AOC (getInput, readInt)
+import Data.Bits (shiftR)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
+
+type Pair = (Integer, Integer)
 
 p1Length = 10007
 
@@ -12,89 +15,57 @@ p2Length = 119315717514047
 
 p2Cycles = 101741582076661
 
-solve :: IO (Int, Int)
+solve :: IO (Integer, Integer)
 solve = do
   input <- fmap words . lines <$> getInput "2019" "22"
-  let revP2 = backward input
-      composed = foldr (.) id revP2
-      (offset1, a1) = (composed 0, composed 1)
-      (offset2, a2) = (composed $ composed 0, composed $ composed 1)
-  print (offset1, a1 - offset1)
-  print (offset2, a2 - offset2)
-  return (p1 input, p2 input)
+  let (offsetDiff, incrementMult) = singleTurn p2Length input
+      finalInc = modExp incrementMult p2Cycles p2Length
+      finalOffset = (`mod` p2Length) $ offsetDiff * (1 - modExp incrementMult p2Cycles p2Length) * modExp (1 - incrementMult) (p2Length - 2) p2Length
+      p2 = (finalOffset + finalInc * 2020) `mod` p2Length
+  return (p1 input, p2)
 
-p1 :: [[String]] -> Int
+p1 :: [[String]] -> Integer
 p1 = foldl f 2019
   where
     f acc i@(x : y : _)
-      | x == "cut" = cut (readInt y) acc p1Length
+      | x == "cut" = cut (read y) acc p1Length
       | y == "into" = p1Length - 1 - acc
-      | otherwise = increment (readInt $ i !! 3) acc p1Length
+      | otherwise = increment (read $ i !! 3) acc p1Length
 
-cut :: Int -> Int -> Int -> Int
+cut :: Integer -> Integer -> Integer -> Integer
 cut ct ind len
   | ct == 0 = ind
   | otherwise = (ind - ct) `mod` len
 
-increment :: Int -> Int -> Int -> Int
+increment :: Integer -> Integer -> Integer -> Integer
 increment inc ind len = ind * inc `mod` len
 
-p2 :: [[String]] -> Int
-p2 inst = go times number
-  where
-    fs = backward inst
-    (n0, n1, number) = p2Cycle fs
-    cycle = n1 - n0
-    times = (p2Cycles - n0) `mod` cycle
-    go 0 acc = acc
-    go n acc = go (n - 1) (foldr id acc fs)
+cut' :: Pair -> Integer -> Integer -> Integer
+cut' (offset, inc) n len = (offset + inc * n) `mod` len
 
-p2Cycle :: [Int -> Int] -> (Int, Int, Int)
-p2Cycle fs = go 2020 0 M.empty
+reverse' :: Pair -> Integer -> Pair
+reverse' (offset, inc) len = ((offset - inc) `mod` len, -inc `mod` len)
+
+increment' :: Pair -> Integer -> Integer -> Integer
+increment' (offset, inc) n len = inc * modExp n (len - 2) len -- assumes len is prime
+
+-- implemented based on pseduocode on Wikipedia page for modular exponentiation
+modExp :: Integer -> Integer -> Integer -> Integer
+modExp b p 1 = 0
+modExp b p m = go b p 1
   where
-    go acc n seen
-      | M.member acc seen = (seen M.! acc, n, acc)
-      | otherwise = go next (n + 1) (M.insert acc n seen)
+    go base pow r
+      | pow <= 0 = r
+      | otherwise = go b' p' r'
       where
-        next = foldr id acc fs
+        b' = base ^ 2 `mod` m
+        r' = if odd pow then (r * base) `mod` m else r
+        p' = shiftR pow 1
 
-forCycle :: [[String]] -> (Int, Int, Int)
-forCycle inst = go 2020 0 M.empty
+singleTurn :: Integer -> [[String]] -> Pair
+singleTurn len = foldl f (0, 1)
   where
-    fs = forward inst
-    go acc n seen
-      | M.member acc seen = (seen M.! acc, n, acc)
-      | otherwise = go next (n + 1) (M.insert acc n seen)
-      where
-        next = foldr id acc fs
-
-forward :: [[String]] -> [Int -> Int]
-forward = foldl f []
-  where
-    f acc i@(x : y : _)
-      | x == "cut" = flip (cut (readInt y)) p2Length : acc
-      | y == "into" = (-) (p2Length - 1) : acc
-      | otherwise = flip (increment (readInt $ i !! 3)) p2Length : acc
-
-backward :: [[String]] -> [Int -> Int]
-backward = foldr f []
-  where
-    f i@(x : y : _) acc
-      | x == "cut" = flip (rCut (readInt y)) p2Length : acc
-      | y == "into" = (-) (p2Length - 1) : acc
-      | otherwise = flip (rIncrement (readInt $ i !! 3)) p2Length : acc
-
-rCut :: Int -> Int -> Int -> Int
-rCut ct ind len
-  | ct == 0 = ind
-  | otherwise = (ind + ct) `mod` len
-
-rIncrement :: Int -> Int -> Int -> Int
-rIncrement inc ind len = ind * findReversal inc len `mod` len
-
-findReversal :: Int -> Int -> Int
-findReversal inc len = go len
-  where
-    go n
-      | (n + 1) `mod` inc == 0 = (n + 1) `div` inc
-      | otherwise = go (n + len)
+    f acc@(offset, inc) i@(x : y : _)
+      | x == "cut" = (cut' acc (read y) len, inc)
+      | y == "into" = reverse' acc len
+      | otherwise = (offset, increment' acc (read $ i !! 3) len)
