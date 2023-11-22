@@ -2,6 +2,7 @@ module Main where
 
 import AOC (readInt)
 import Y2018.Day1
+import Y2018.Day2
 import Y2019.Day1
 import Y2019.Day10
 import Y2019.Day11
@@ -34,7 +35,8 @@ report d x = do
   putStrLn $ "Day " ++ show d ++ " Part 1: " ++ show a ++ ", Part 2: " ++ show b
 
 solutions2018 =
-  [ report 1 Y2018.Day1.solve
+  [ report 1 Y2018.Day1.solve,
+    report 2 Y2018.Day2.solve
   ]
 
 solutions2019 =
