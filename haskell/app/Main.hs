@@ -1,6 +1,7 @@
 module Main where
 
 import AOC (readInt)
+import Y2018.Day1
 import Y2019.Day1
 import Y2019.Day10
 import Y2019.Day11
@@ -27,12 +28,16 @@ import Y2019.Day7
 import Y2019.Day8
 import Y2019.Day9
 
-report :: Show a => Show b => Int -> IO (a, b) -> IO ()
+report :: (Show a, Show b) => Int -> IO (a, b) -> IO ()
 report d x = do
   (a, b) <- x
   putStrLn $ "Day " ++ show d ++ " Part 1: " ++ show a ++ ", Part 2: " ++ show b
 
-solutions =
+solutions2018 =
+  [ report 1 Y2018.Day1.solve
+  ]
+
+solutions2019 =
   [ report 1 Y2019.Day1.solve,
     report 2 Y2019.Day2.solve,
     report 3 Y2019.Day3.solve,
@@ -60,14 +65,24 @@ solutions =
     report 25 Y2019.Day25.solve
   ]
 
-f :: String -> IO [()]
-f i
-  | i `elem` (show <$> [1 .. length solutions]) = sequence [solutions !! (readInt i - 1)]
-  | i == "all" = sequence solutions
+f :: String -> String -> IO [()]
+f yr day
+  | day `elem` (show <$> [1 .. length solutions]) = sequence [solutions !! (readInt day - 1)]
+  | day == "all" = sequence solutions
   | otherwise = sequence [last solutions]
+  where
+    solutions = year yr
+
+-- not sure how to do the type declaration for year, it takes a string and returns a list of the type of the report function
+year s = case s of
+  "2019" -> solutions2019
+  "2018" -> solutions2018
+  _ -> solutions2019
 
 main :: IO [()]
 main = do
+  putStrLn "Which year?"
+  yr <- getLine
   putStrLn "Which day? (default is latest, enter # or \"all\" for a specific day or all days, repsectively)"
-  input <- getLine
-  f input
+  day <- getLine
+  f yr day
