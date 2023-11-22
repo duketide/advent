@@ -15,12 +15,16 @@ tally = foldr folder 0
     folder str acc = acc + parser str
 
 p2 :: [String] -> Int
-p2 strs = go strs 0 S.empty
+p2 strs = go 0 0 S.empty
   where
-    go :: [String] -> Int -> Set Int -> Int
-    go s c f
+    go :: Int -> Int -> Set Int -> Int
+    go i c f
       | S.member c f = c
-      | otherwise = go (tail s ++ [head s]) (c + parser (head s)) (S.insert c f)
+      | otherwise = go n (c + parser (strs !! i)) (S.insert c f)
+      where
+        n
+          | i == length strs - 1 = 0
+          | otherwise = i + 1
 
 solve :: IO (Int, Int)
 solve = do
