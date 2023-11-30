@@ -3,6 +3,7 @@ module Main where
 import AOC (readInt)
 import Y2018.Day1
 import Y2018.Day2
+import Y2018.Day3
 import Y2019.Day1
 import Y2019.Day10
 import Y2019.Day11
@@ -36,7 +37,8 @@ report d x = do
 
 solutions2018 =
   [ report 1 Y2018.Day1.solve,
-    report 2 Y2018.Day2.solve
+    report 2 Y2018.Day2.solve,
+    report 3 Y2018.Day3.solve
   ]
 
 solutions2019 =
