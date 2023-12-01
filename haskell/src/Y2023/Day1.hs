@@ -9,7 +9,7 @@ extractDigits s = n
     digits = filter isDigit s
     n = case digits of
       (x : _) -> read [head digits, last digits]
-      _ -> error ("not enough digits p1 " ++ digits)
+      _ -> error "no digits p1"
 
 p1 :: [String] -> Int
 p1 = sum . map extractDigits
