@@ -29,6 +29,7 @@ import Y2019.Day6
 import Y2019.Day7
 import Y2019.Day8
 import Y2019.Day9
+import Y2023.Day1
 
 report :: (Show a, Show b) => Int -> IO (a, b) -> IO ()
 report d x = do
@@ -69,6 +70,10 @@ solutions2019 =
     report 25 Y2019.Day25.solve
   ]
 
+solutions2023 =
+  [ report 1 Y2023.Day1.solve
+  ]
+
 f :: String -> String -> IO [()]
 f yr day
   | day `elem` (show <$> [1 .. length solutions]) = sequence [solutions !! (readInt day - 1)]
@@ -79,9 +84,10 @@ f yr day
 
 -- not sure how to do the type declaration for year, it takes a string and returns a list of the type of the report function
 year s = case s of
+  "2023" -> solutions2023
   "2019" -> solutions2019
   "2018" -> solutions2018
-  _ -> solutions2019
+  _ -> solutions2023
 
 main :: IO [()]
 main = do
