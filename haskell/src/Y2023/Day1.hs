@@ -1,14 +1,15 @@
 module Y2023.Day1 (solve) where
 
 import AOC (getInput)
-import Data.Char (isAlpha, isDigit)
+import Data.Char (isDigit)
 
 extractDigits :: String -> Int
-extractDigits s = digits
+extractDigits s = n
   where
-    firstDig = head $ dropWhile isAlpha s
-    lastDig = head $ dropWhile isAlpha $ reverse s
-    digits = read [firstDig, lastDig]
+    digits = filter isDigit s
+    n = case digits of
+      (x : _) -> read [head digits, last digits]
+      _ -> error ("not enough digits p1 " ++ digits)
 
 p1 :: [String] -> Int
 p1 = sum . map extractDigits
@@ -29,6 +30,7 @@ extractDigits2 s = go s []
     go (x : xs) c
       | isDigit x = go xs (x : c)
       | otherwise = go xs c
+    go [] [] = error "no digits p2"
     go [] c = digits
       where
         firstDig = last c
