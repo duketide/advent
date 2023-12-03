@@ -8,48 +8,24 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 
-isDigOrDot :: Char -> Bool
-isDigOrDot c = isDigit c || c == '.'
+notDigOrDot :: Char -> Bool
+notDigOrDot c = not (isDigit c || c == '.')
 
-isGear :: Char -> Bool
-isGear c = c == '*'
+getCoords :: ((Pair, Set Pair) -> Char -> (Pair, Set Pair)) -> [String] -> Set Pair
+getCoords f = snd . foldl (folder f) ((0, -1), S.empty)
 
-getSymbolCoords :: [String] -> Set Pair
-getSymbolCoords = snd . foldl lineFolder ((0, -1), S.empty)
+folder :: ((Pair, Set Pair) -> Char -> (Pair, Set Pair)) -> (Pair, Set Pair) -> String -> (Pair, Set Pair)
+folder f ((_, y), s) = foldl f ((0, y + 1), s)
 
-lineFolder :: (Pair, Set Pair) -> String -> (Pair, Set Pair)
-lineFolder ((_, y), s) = foldl pointChecker ((0, y + 1), s)
-
-pointChecker :: (Pair, Set Pair) -> Char -> (Pair, Set Pair)
-pointChecker (p@(x, y), s) ch
-  | isDigOrDot ch = (next, s)
-  | otherwise = (next, S.insert p s)
-  where
-    next = (x + 1, y)
-
-getGearCoords :: [String] -> Set Pair
-getGearCoords = snd . foldl gearFolder ((0, -1), S.empty)
-
-gearFolder :: (Pair, Set Pair) -> String -> (Pair, Set Pair)
-gearFolder ((_, y), s) = foldl gearChecker ((0, y + 1), s)
-
-gearChecker :: (Pair, Set Pair) -> Char -> (Pair, Set Pair)
-gearChecker (p@(x, y), s) ch
-  | isGear ch = (next, S.insert p s)
+checker :: (Char -> Bool) -> (Pair, Set Pair) -> Char -> (Pair, Set Pair)
+checker f (p@(x, y), s) ch
+  | f ch = (next, S.insert p s)
   | otherwise = (next, s)
   where
     next = (x + 1, y)
 
 numsAndNbrs :: [String] -> [(Int, Set Pair)]
 numsAndNbrs = snd . foldl lineRecurser (0, [])
-
-tallyNbrs :: [(Int, Set Pair)] -> Map Pair [Int]
-tallyNbrs = foldr singleTally M.empty
-
-singleTally :: (Int, Set Pair) -> Map Pair [Int] -> Map Pair [Int]
-singleTally (num, s) mp = S.foldr func mp s
-  where
-    func pt acc = M.insert pt (num : fromMaybe [] (M.lookup pt acc)) acc
 
 lineRecurser :: (Int, [(Int, Set Pair)]) -> String -> (Int, [(Int, Set Pair)])
 lineRecurser (y, acc) = go ((0, y), [], S.empty, acc)
@@ -68,17 +44,25 @@ lineRecurser (y, acc) = go ((0, y), [], S.empty, acc)
 p1 :: [String] -> Int
 p1 inp = sum . map fst . filter f . numsAndNbrs $ inp
   where
-    syms = getSymbolCoords inp
+    syms = getCoords (checker notDigOrDot) inp
     f :: (Int, Set Pair) -> Bool
     f (_, s) = not $ null $ S.intersection s syms
+
+tallyNbrs :: [(Int, Set Pair)] -> Map Pair [Int]
+tallyNbrs = foldr singleTally M.empty
+
+singleTally :: (Int, Set Pair) -> Map Pair [Int] -> Map Pair [Int]
+singleTally (num, s) mp = S.foldr func mp s
+  where
+    func pt acc = M.insert pt (num : fromMaybe [] (M.lookup pt acc)) acc
 
 p2 :: [String] -> Int
 p2 inp = S.foldr func 0 gears
   where
     tally = tallyNbrs . numsAndNbrs $ inp
-    gears = getGearCoords inp
+    gears = getCoords (checker (== '*')) inp
     func p accum
-      | length l == 2 = accum + (head l * l !! 1)
+      | length l == 2 = accum + product l
       | otherwise = accum
       where
         l = fromMaybe [] $ M.lookup p tally
