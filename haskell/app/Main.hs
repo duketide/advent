@@ -31,6 +31,7 @@ import Y2019.Day8
 import Y2019.Day9
 import Y2023.Day1
 import Y2023.Day2
+import Y2023.Day3
 
 report :: (Show a, Show b) => Int -> IO (a, b) -> IO ()
 report d x = do
@@ -73,7 +74,8 @@ solutions2019 =
 
 solutions2023 =
   [ report 1 Y2023.Day1.solve,
-    report 2 Y2023.Day2.solve
+    report 2 Y2023.Day2.solve,
+    report 3 Y2023.Day3.solve
   ]
 
 f :: String -> String -> IO [()]

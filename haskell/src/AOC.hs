@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AOC (readInt, getInput, trim, nbrs, nbrsBounded, nbrs4, nbrsBounded4, predWrap, succWrap) where
+module AOC (readInt, getInput, trim, nbrs, nbrsBounded, nbrs4, nbrsBounded4, predWrap, succWrap, Pair) where
 
 import Control.Lens ((&), (.~), (^.))
 import Data.ByteString (ByteString)
