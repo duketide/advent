@@ -38,6 +38,7 @@ p2 inp = res
   where
     (_, _, res) = foldl p2tally (1, M.empty, 0) (map2wins inp)
 
+p2tally :: P2State -> Int -> P2State
 p2tally (idx, mults, result) wins = (idx + 1, newMults, result + currCount)
   where
     currCount = 1 + fromMaybe 0 (M.lookup idx mults)
