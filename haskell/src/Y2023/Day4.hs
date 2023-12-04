@@ -25,11 +25,10 @@ inpParse = map (f . map words . splitOn "|")
     f x = error "bad parse"
 
 p1 :: [String] -> Int
-p1 = foldr f 0 . inpParse
+p1 = foldr f 0 . map2wins
   where
-    f c acc = acc + x
+    f wins acc = acc + x
       where
-        wins = S.size $ S.intersection (winners c) (nums c)
         x
           | wins > 0 = 2 ^ (wins - 1)
           | otherwise = 0
