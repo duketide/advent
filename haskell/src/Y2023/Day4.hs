@@ -10,9 +10,8 @@ import qualified Data.Set as S
 
 -- using sets assumes no duplicate numbers in winner list or "your numbers" list for a given card
 data Card = Card
-  { card :: Int,
-    winners :: Set Int,
-    nums :: Set Int
+  { winners :: Set String,
+    nums :: Set String
   }
   deriving (Show)
 
@@ -31,7 +30,7 @@ map2wins = map f . inpParse
 inpParse :: [String] -> [Card]
 inpParse = map (f . map words . splitOn "|")
   where
-    f [_ : x : t, ys] = Card (read (init x)) (S.fromList (map read t)) (S.fromList (map read ys))
+    f [_ : _ : t, ys] = Card (S.fromList t) (S.fromList ys)
     f x = error "bad parse"
 
 p2 :: [String] -> Int
