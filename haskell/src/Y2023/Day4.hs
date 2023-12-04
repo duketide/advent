@@ -8,6 +8,7 @@ import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as S
 
+-- using sets assumes no duplicate numbers in winner list or "your numbers" list for a given card
 data Card = Card
   { card :: Int,
     winners :: Set Int,
@@ -17,29 +18,28 @@ data Card = Card
 
 type P2State = (Int, Map Int Int, Int)
 
--- using sets assumes no duplicate numbers in winner list or "your numbers" list for a given card
-inpParse :: [String] -> [Card]
-inpParse = map (f . map words . splitOn "|")
-  where
-    f [_ : x : t, ys] = Card (read (init x)) (S.fromList (map read t)) (S.fromList (map read ys))
-    f x = error "bad parse"
-
 p1 :: [String] -> Int
 p1 = foldr f 0 . map2wins
   where
-    f wins acc = acc + x
-      where
-        x
-          | wins > 0 = 2 ^ (wins - 1)
-          | otherwise = 0
+    f wins acc = acc + if wins > 0 then 2 ^ (wins - 1) else 0
 
 map2wins :: [String] -> [Int]
 map2wins = map f . inpParse
   where
     f c = S.size $ S.intersection (winners c) (nums c)
 
-tally :: P2State -> Int -> P2State
-tally (idx, mults, result) wins = (idx + 1, newMults, result + currCount)
+inpParse :: [String] -> [Card]
+inpParse = map (f . map words . splitOn "|")
+  where
+    f [_ : x : t, ys] = Card (read (init x)) (S.fromList (map read t)) (S.fromList (map read ys))
+    f x = error "bad parse"
+
+p2 :: [String] -> Int
+p2 inp = res
+  where
+    (_, _, res) = foldl p2tally (1, M.empty, 0) (map2wins inp)
+
+p2tally (idx, mults, result) wins = (idx + 1, newMults, result + currCount)
   where
     currCount = 1 + fromMaybe 0 (M.lookup idx mults)
     newMults = go mults (idx + 1)
@@ -48,11 +48,6 @@ tally (idx, mults, result) wins = (idx + 1, newMults, result + currCount)
         go mp i
           | i - idx > wins = mp
           | otherwise = go (M.insertWith (+) i currCount mp) (i + 1)
-
-p2 :: [String] -> Int
-p2 inp = res
-  where
-    (_, _, res) = foldl tally (1, M.empty, 0) (map2wins inp)
 
 solve :: IO (Int, Int)
 solve = do
