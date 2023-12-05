@@ -9,9 +9,9 @@ import Data.List.Split (chunksOf, splitOn)
 data InvMap = InvMap {dest, src, rl :: Int} deriving (Show)
 
 rangeTest :: Int -> InvMap -> (Int, Bool)
-rangeTest n m = (if test then dest m + n - src m else n, test)
+rangeTest n (InvMap {dest, src, rl}) = (if test then dest + n - src else n, test)
   where
-    test = n >= src m && n <= src m + rl m - 1
+    test = n >= src && n <= src + rl - 1
 
 mapParse :: String -> [InvMap]
 mapParse = map (f . map readInt . words) . tail . lines
