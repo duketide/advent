@@ -1,8 +1,9 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Y2023.Day5 (solve) where
 
 import AOC (getInput, readInt)
-import Data.List.Split (splitOn)
-import Language.Haskell.TH.Lens (injectivityAnnInputs)
+import Data.List.Split (chunksOf, splitOn)
 
 data InvMap = InvMap {dest, src, rl :: Int} deriving (Show)
 
@@ -32,7 +33,32 @@ p1 (x : xs) = minimum $ foldl func seeds invMaps
     seeds = readInt <$> tail (words x)
     invMaps = mapParse <$> xs
 
+ranges :: (Bool, (Int, Int)) -> InvMap -> [(Bool, (Int, Int))]
+ranges n@(True, _) _ = pure n
+ranges (_, (s1, len)) (InvMap {dest, src = s2, rl})
+  | s1 < s2 && e1 > e2 = [(True, (s2 + d, rl)), (False, (s1, s2 - s1)), (False, (e2 + 1, len - rl - (s2 - s1)))]
+  | s1 >= s2 && e1 <= e2 = pure (True, (s1 + d, len))
+  | e1 < s2 || s1 > e2 = pure (False, (s1, len))
+  | s1 >= s2 = [(True, (s1 + d, o1)), (False, (s1 + o1, len - o1))]
+  | otherwise = [(False, (s1, len - o2)), (True, (s1 + len - o2 + d, o2))]
+  where
+    e1 = s1 + len - 1
+    e2 = s2 + rl - 1
+    d = dest - s2
+    o1 = e2 - s1 + 1
+    o2 = e1 - s2 + 1
+
+rangeFolder :: (Bool, (Int, Int)) -> [InvMap] -> [(Bool, (Int, Int))]
+rangeFolder r = map (\(_, x) -> (False, x)) . foldl (\acc m -> acc >>= (`ranges` m)) [r]
+
+p2 :: [String] -> Int
+p2 (x : xs) = minimum $ map (fst . snd) $ foldl func seeds invMaps
+  where
+    func sds invMs = concatMap (`rangeFolder` invMs) sds
+    seeds = map (\(x : y : _) -> (False, (x, y))) $ chunksOf 2 $ readInt <$> tail (words x)
+    invMaps = mapParse <$> xs
+
 solve :: IO (Int, Int)
 solve = do
   input <- splitOn "\n\n" <$> getInput "2023" "5"
-  return (p1 input, 0)
+  return (p1 input, p2 input)
