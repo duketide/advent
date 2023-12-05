@@ -56,6 +56,7 @@ library
                     , Y2023.Day2
                     , Y2023.Day3
                     , Y2023.Day4
+                    , Y2023.Day5
 
     -- Modules included in this library but not exported.
     -- other-modules: 
