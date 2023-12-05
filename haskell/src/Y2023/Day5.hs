@@ -3,6 +3,7 @@
 module Y2023.Day5 (solve) where
 
 import AOC (getInput, readInt)
+import Data.Bifunctor (Bifunctor (first))
 import Data.List.Split (chunksOf, splitOn)
 
 data InvMap = InvMap {dest, src, rl :: Int} deriving (Show)
@@ -33,6 +34,7 @@ p1 (x : xs) = minimum $ foldl func seeds invMaps
     seeds = readInt <$> tail (words x)
     invMaps = mapParse <$> xs
 
+-- ranges uses boolean flags to track which ranges have been mapped
 ranges :: (Bool, (Int, Int)) -> InvMap -> [(Bool, (Int, Int))]
 ranges n@(True, _) _ = pure n
 ranges (_, (s1, len)) (InvMap {dest, src = s2, rl})
@@ -49,7 +51,7 @@ ranges (_, (s1, len)) (InvMap {dest, src = s2, rl})
     o2 = e1 - s2 + 1
 
 rangeFolder :: (Bool, (Int, Int)) -> [InvMap] -> [(Bool, (Int, Int))]
-rangeFolder r = map (\(_, x) -> (False, x)) . foldl (\acc m -> acc >>= (`ranges` m)) [r]
+rangeFolder r = map (first (const False)) . foldl (\acc m -> acc >>= (`ranges` m)) [r]
 
 p2 :: [String] -> Int
 p2 (x : xs) = minimum $ map (fst . snd) $ foldl func seeds invMaps
