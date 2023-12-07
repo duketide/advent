@@ -48,9 +48,7 @@ score :: [Hand] -> Int
 score = sum . zipWith (*) [1 ..] . map (snd . snd)
 
 p1 :: [(String, Int)] -> Int
-p1 inp = score sorted
-  where
-    sorted = sortBy comp (eval <$> inp)
+p1 = score . sortBy comp . map eval
 
 joker :: (HandType, (String, Int)) -> (HandType, (String, Int))
 joker o@(t, h@(s, b)) = case t of
@@ -65,12 +63,9 @@ joker o@(t, h@(s, b)) = case t of
     test = length (filter (== '1') s) == 2
 
 p2 :: [(String, Int)] -> Int
-p2 inp = score sorted
+p2 = score . sortBy comp . map (f . eval)
   where
-    sorted = sortBy comp jSorted
-    jSorted = f . eval <$> inp
-    f h@(t, (s, b)) = if '1' `elem` s then joker h else h
-    initList = eval <$> inp
+    f h@(t, (s, _)) = if '1' `elem` s then joker h else h
 
 solve :: IO (Int, Int)
 solve = do
