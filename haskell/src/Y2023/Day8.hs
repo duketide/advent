@@ -8,6 +8,10 @@ import qualified Data.Map as M
 
 type NodeMap = Map String (String, String)
 
+parse :: [String] -> (String, NodeMap)
+parse (lr : mp : _) = (lr, foldr lineMap M.empty $ lines mp)
+parse _ = error "parse error"
+
 lineMap :: String -> NodeMap -> NodeMap
 lineMap x = M.insert nd (l, r)
   where
@@ -22,13 +26,12 @@ walker c s nm = f (nm M.! s)
       'R' -> snd
       _ -> error "walking"
 
-p1 :: [String] -> Int
-p1 (lr : mp : _) = go lr 0 "AAA"
+p1 :: (String, NodeMap) -> Int
+p1 (lr, mp) = go lr 0 "AAA"
   where
-    nodeMap = foldr lineMap M.empty (lines mp)
     go :: String -> Int -> String -> Int
     go _ c "ZZZ" = c
-    go (dir : dirs) c nd = go (dirs ++ [dir]) (c + 1) (walker dir nd nodeMap)
+    go (dir : dirs) c nd = go (dirs ++ [dir]) (c + 1) (walker dir nd mp)
 
 aFinder :: NodeMap -> [String]
 aFinder = filter (\x -> last x == 'A') . M.keys
@@ -46,12 +49,10 @@ zFinder o@(lr : lrs) nm nd = go 1 (lrs ++ [lr]) (walker lr nd nm)
    steps to the first Z was also a cycle. i'm not sure that had to be
    true. -}
 
-p2 :: [String] -> Int
-p2 (lr : mp : _) = foldr lcm 1 (zFinder lr nodeMap <$> aFinder nodeMap)
-  where
-    nodeMap = foldr lineMap M.empty (lines mp)
+p2 :: (String, NodeMap) -> Int
+p2 (lr, mp) = foldr lcm 1 $ zFinder lr mp <$> aFinder mp
 
 solve :: IO (Int, Int)
 solve = do
-  input <- splitOn "\n\n" <$> getInput "2023" "8"
+  input <- parse . splitOn "\n\n" <$> getInput "2023" "8"
   return (p1 input, p2 input)
