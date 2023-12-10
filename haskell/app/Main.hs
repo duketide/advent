@@ -30,6 +30,7 @@ import Y2019.Day7
 import Y2019.Day8
 import Y2019.Day9
 import Y2023.Day1
+import Y2023.Day10
 import Y2023.Day2
 import Y2023.Day3
 import Y2023.Day4
@@ -87,7 +88,8 @@ solutions2023 =
     report 6 Y2023.Day6redux.solve,
     report 7 Y2023.Day7.solve,
     report 8 Y2023.Day8.solve,
-    report 9 Y2023.Day9.solve
+    report 9 Y2023.Day9.solve,
+    report 10 Y2023.Day10.solve
   ]
 
 f :: String -> String -> IO [()]
