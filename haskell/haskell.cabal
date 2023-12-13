@@ -62,6 +62,7 @@ library
                     , Y2023.Day8
                     , Y2023.Day9
                     , Y2023.Day10
+                    , Y2023.Day11
 
     -- Modules included in this library but not exported.
     -- other-modules: 
