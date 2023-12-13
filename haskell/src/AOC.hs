@@ -12,6 +12,14 @@ import System.Posix.Env.ByteString (getEnv)
 
 type Pair = (Int, Int)
 
+type MaxX = Int
+
+type MinX = Int
+
+type MaxY = Int
+
+type MinY = Int
+
 readInt :: String -> Int
 readInt = read
 
@@ -62,7 +70,7 @@ nbrs4 (a, b) = [(f a, g b) | f <- funcs, g <- funcs, (f a, g b) /= (a, b), f a =
   where
     funcs = [(+ 1), (+ (-1)), id]
 
-nbrsBounded :: Pair -> Pair -> Pair -> [Pair]
+nbrsBounded :: (MinX, MaxX) -> (MinY, MaxY) -> Pair -> [Pair]
 nbrsBounded (xMin, xMax) (yMin, yMax) (a, b) = [(f a, g b) | f <- funcs, g <- funcs, let x = f a; y = g b, (x, y) /= (a, b), x >= xMin, x <= xMax, y >= yMin, y <= yMax]
   where
     funcs = [(+ 1), (+ (-1)), id]

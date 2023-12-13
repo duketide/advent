@@ -1,7 +1,7 @@
 module Y2023.Day10 (solve) where
 
-import AOC (getInput, nbrs)
-import Data.List (intersect, nub)
+import AOC (getInput, nbrs, nbrs4)
+import Data.List (groupBy, intersect, nub, sortBy)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
@@ -46,7 +46,7 @@ nextPipes :: Point -> Pipes -> [Point]
 nextPipes (x, y) ps = filter f next
   where
     current = ps M.! (x, y)
-    next = nbrs (x, y)
+    next = nbrs4 (x, y)
     f (x', y') = connectTest current (M.lookup (x', y') ps) (x' - x, y' - y)
 
 p1 :: Point -> Pipes -> Int
@@ -58,8 +58,62 @@ p1 start mp = go 0 (pure start) S.empty
       where
         nextPs = filter (not . (`S.member` seen)) $ ps >>= (`nextPipes` mp)
 
+loopFinder :: Point -> Pipes -> Set Point
+loopFinder start mp = go (pure start) S.empty
+  where
+    go ps seen
+      | not (null (ps `intersect` nextPs)) || (length (nub ps) == 1 && head ps /= start) = foldr S.insert seen ps
+      | otherwise = go nextPs (foldr S.insert seen ps)
+      where
+        nextPs = filter (not . (`S.member` seen)) $ ps >>= (`nextPipes` mp)
+
+p2 :: String -> Int
+p2 rawInp = result
+  where
+    input = map (\x -> if x == 'S' then sMapper start inpMap else x) rawInp
+    inpMap = parser rawInp
+    start = fst $ head $ filter ((== 'S') . snd) $ M.assocs inpMap
+    loop = loopFinder start inpMap
+    (_, _, _, result) = foldl fn ((0, 0), firstVert, False, 0) input
+      where
+        firstVert = if (0, 0) `S.member` loop && isVert (head rawInp) then head rawInp else ' '
+        fn ((x, y), _, _, ct) '\n' = ((0, y + 1), ' ', False, ct)
+        fn ((x, y), lastVert, bool, ct) c
+          | not (S.member (x, y) loop) = ((x + 1, y), lastVert, bool, if bool then ct + 1 else ct)
+          | not (isVert c) = ((x + 1, y), lastVert, bool, ct)
+          | toggle c lastVert = ((x + 1, y), ' ', not bool, ct)
+          | lastVert == ' ' = ((x + 1, y), c, bool, ct)
+          | otherwise = ((x + 1, y), ' ', bool, ct)
+
+toggle :: Char -> Char -> Bool
+toggle c l =
+  c == '|'
+    || (l == 'F' && c == 'J')
+    || (l == 'L' && c == '7')
+
+isVert :: Char -> Bool
+isVert c = c == '|' || c == '7' || c == 'F' || c == 'L' || c == 'J'
+
+sMapper :: Point -> Pipes -> Char
+sMapper (x, y) ps = c
+  where
+    [u, d, l, r] = (`M.lookup` ps) <$> [(x, y - 1), (x, y + 1), (x - 1, y), (x, y + 1)]
+    up = u == Just '|' || u == Just 'F' || u == Just '7'
+    down = d == Just '|' || d == Just 'J' || d == Just 'L'
+    left = l == Just '-' || l == Just 'L' || l == Just 'F'
+    right = r == Just '-' || r == Just '7' || r == Just 'J'
+    c
+      | up && down = '|'
+      | right && left = '-'
+      | up && right = 'L'
+      | up && left = 'J'
+      | down && right = 'F'
+      | down && left = '7'
+      | otherwise = error "s-map error"
+
 solve :: IO (Int, Int)
 solve = do
-  input <- parser <$> getInput "2023" "10"
-  let start = fst $ head $ filter ((== 'S') . snd) $ M.assocs input
-  return (p1 start input, 0)
+  input <- getInput "2023" "10"
+  let inpMap = parser input
+      start = fst $ head $ filter ((== 'S') . snd) $ M.assocs inpMap
+  return (p1 start inpMap, p2 input)
