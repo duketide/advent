@@ -6,9 +6,7 @@ import Data.List (transpose)
 import Data.List.Split (splitOn)
 
 test :: [String] -> Int -> Bool
-test s n
-  | all (uncurry (==)) (zip (reverse a) b) = True
-  | otherwise = False
+test s n = all (uncurry (==)) (zip (reverse a) b)
   where
     (a, b) = splitAt n s
 
@@ -19,8 +17,8 @@ test2 s n = length nl == length nl' + 1
     nl = zip (unlines (reverse a)) (unlines b)
     nl' = filter (uncurry (==)) nl
 
-tabulate :: ([String] -> Int -> Bool) -> [String] -> (Bool, Int)
-tabulate f = go (False, 1)
+findReflection :: ([String] -> Int -> Bool) -> [String] -> (Bool, Int)
+findReflection f = go (False, 1)
   where
     go :: (Bool, Int) -> [String] -> (Bool, Int)
     go (b, n) s
@@ -29,7 +27,7 @@ tabulate f = go (False, 1)
       | otherwise = go (b, n + 1) s
 
 score :: ([String] -> Int -> Bool) -> [[String]] -> Int
-score f = sum . map (g . tabulate f)
+score f = sum . map (g . findReflection f)
   where
     g :: (Bool, Int) -> Int
     g (b, n) = if not b then 100 * n else n
