@@ -1,7 +1,6 @@
 module Y2023.Day13 (solve) where
 
 import AOC (getInput)
-import Data.Bifunctor
 import Data.List (transpose)
 import Data.List.Split (splitOn)
 
